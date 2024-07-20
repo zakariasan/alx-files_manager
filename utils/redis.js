@@ -1,4 +1,5 @@
 // utils/redis.js
+// utils/redis.js
 import redis from 'redis';
 import { promisify } from 'util';
 
@@ -24,15 +25,15 @@ class RedisClient {
   }
 
   async get(key) {
-    await this.getAsync(key);
+    return this.getAsync(key);
   }
 
   async set(key, value, duration) {
-    await this.setAsync(key, value, 'EX', duration);
+    return this.setAsync(key, value, 'EX', duration);
   }
 
   async del(key) {
-    await this.delAsync(key);
+    return this.delAsync(key);
   }
 }
 
