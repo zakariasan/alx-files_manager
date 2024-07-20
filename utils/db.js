@@ -5,9 +5,9 @@ import loadEnvironmentVariables from './env_loader';
 /**
  * Represents a MongoDB client.
  */
-class DatabaseClient {
+class DBClient {
   /**
-   * Creates a new DatabaseClient instance.
+   * Creates a new DBClient instance.
    */
   constructor() {
     loadEnvironmentVariables();
@@ -32,7 +32,7 @@ class DatabaseClient {
    * Retrieves the number of users in the database.
    * @returns {Promise<Number>}
    */
-  async getUserCount() {
+  async nbUsers() {
     return this.client.db().collection('users').countDocuments();
   }
 
@@ -40,27 +40,11 @@ class DatabaseClient {
    * Retrieves the number of files in the database.
    * @returns {Promise<Number>}
    */
-  async getFileCount() {
+  async nbFiles() {
     return this.client.db().collection('files').countDocuments();
-  }
-
-  /**
-   * Retrieves a reference to the `users` collection.
-   * @returns {Promise<Collection>}
-   */
-  async getUsersCollection() {
-    return this.client.db().collection('users');
-  }
-
-  /**
-   * Retrieves a reference to the `files` collection.
-   * @returns {Promise<Collection>}
-   */
-  async getFilesCollection() {
-    return this.client.db().collection('files');
   }
 }
 
-const databaseClient = new DatabaseClient();
-export default databaseClient;
-export { databaseClient };
+const dbClient = new DBClient();
+export default dbClient;
+export { dbClient };
