@@ -1,5 +1,6 @@
 // utils/db.js
 import mongodb from 'mongodb';
+import Collection from 'mongodb/lib/collection';
 import envLoader from './env_loader';
 
 class DBClient {
