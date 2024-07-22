@@ -16,13 +16,13 @@ class UsersController {
     const { email, password } = request.body;
 
     // Validate email and password
-    if (!email) return response.status(400).send({ error: 'Missing email' });
-    if (!password) return response.status(400).send({ error: 'Missing password' });
+    if (!email) return response.status(400).json({ error: 'Missing email' });
+    if (!password) return response.status(400).json({ error: 'Missing password' });
 
     try {
       // Check if email already exists
       const existingUser = await dbClient.usersCollection.findOne({ email });
-      if (existingUser) return response.status(400).send({ error: 'Already exists' });
+      if (existingUser) return response.status(400).json({ error: 'Already exists' });
 
       // Hash the password
       const hashedPassword = sha1(password);
@@ -41,12 +41,12 @@ class UsersController {
         id: result.insertedId,
         email,
       };
-      return response.status(201).send(newUser);
+      return response.status(201).json(newUser);
 
     } catch (err) {
       // Handle unexpected errors
       console.error('Error creating user:', err);
-      return response.status(500).send({ error: 'Error creating user' });
+      return response.status(500).json({ error: 'Error creating user' });
     }
   }
 
@@ -60,16 +60,16 @@ class UsersController {
       const { userId } = await userUtils.getUserIdAndKey(request);
       const user = await userUtils.getUser({ _id: ObjectId(userId) });
 
-      if (!user) return response.status(401).send({ error: 'Unauthorized' });
+      if (!user) return response.status(401).json({ error: 'Unauthorized' });
 
       // Return user object without sensitive fields
       const { _id, password, ...userData } = user;
-      return response.status(200).send({ id: _id, ...userData });
+      return response.status(200).json({ id: _id, ...userData });
 
     } catch (err) {
       // Handle unexpected errors
       console.error('Error retrieving user:', err);
-      return response.status(500).send({ error: 'Internal Server Error' });
+      return response.status(500).json({ error: 'Internal Server Error' });
     }
   }
 }
