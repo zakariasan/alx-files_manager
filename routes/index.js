@@ -1,15 +1,19 @@
 // routes/index.js
 // routes/index.js
-import { Router } from 'express';
-import AppController from '../controllers/AppController';
+import express from 'express';
+import appRoutes from './appRoutes';
+import usersRoutes from './usersRoutes';
+import authRoutes from './authRoutes';
+import filesRoutes from './filesRoutes';
 
-const router = Router();
+const router = express.Router();
 
-// Define routes and link them to the controller methods
-router.get('/status', AppController.getStatus);
-router.get('/stats', AppController.getStats);
+// Mount the routes
+router.use('/status', appRoutes);
+router.use('/stats', appRoutes);
+router.use('/users', usersRoutes);
+router.use('/connect', authRoutes);
+router.use('/disconnect', authRoutes);
+router.use('/files', filesRoutes);
 
-// Export a function to use the routes in the app
-export default (app) => {
-  app.use('/', router);
-};
+export default router;
