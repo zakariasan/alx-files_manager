@@ -1,40 +1,60 @@
 // utils/db.js
-import mongodb from 'mongodb';
-import Collection from 'mongodb/lib/collection';
-import envLoader from './env_loader';
+import { MongoClient } from 'mongodb';
+import loadEnvironmentVariables from './env_loader';
 
+/**
+ * Represents a MongoDB client.
+ */
 class DBClient {
+  /**
+   * Creates a new DBClient instance.
+   */
   constructor() {
-    envLoader();
+    loadEnvironmentVariables();
     const host = process.env.DB_HOST || 'localhost';
     const port = process.env.DB_PORT || 27017;
-    const database = process.env.DB_DATABASE || 'files_manager';
-    const dbURL = `mongodb://${host}:${port}/${database}`;
+    const databaseName = process.env.DB_DATABASE || 'files_manager';
+    const connectionString = `mongodb://${host}:${port}/${databaseName}`;
 
-    this.client = new mongodb.MongoClient(dbURL, { useUnifiedTopology: true });
-    this.client.connect();
+    this.client = new MongoClient(connectionString, { useUnifiedTopology: true });
+    this.connected = false;
+
+    this.client.connect()
+      .then(() => {
+        this.connected = true;
+        console.log('MongoDB client connected successfully');
+      })
+      .catch((err) => {
+        this.connected = false;
+        console.error('MongoDB client connection error:', err);
+      });
   }
 
+  /**
+   * Checks if this client's connection to the MongoDB server is active.
+   * @returns {boolean}
+   */
   isAlive() {
-    return this.client.isConnected();
+    return this.connected;
   }
 
+  /**
+   * Retrieves the number of users in the database.
+   * @returns {Promise<Number>}
+   */
   async nbUsers() {
     return this.client.db().collection('users').countDocuments();
   }
 
+  /**
+   * Retrieves the number of files in the database.
+   * @returns {Promise<Number>}
+   */
   async nbFiles() {
     return this.client.db().collection('files').countDocuments();
   }
-
-  async usersCollection() {
-    return this.client.db().collection('users');
-  }
-
-  async filesCollection() {
-    return this.client.db().collection('files');
-  }
 }
 
-export const dbClient = new DBClient();
+const dbClient = new DBClient();
 export default dbClient;
+export { dbClient };
