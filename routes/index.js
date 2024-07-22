@@ -1,19 +1,33 @@
 // routes/index.js
-// routes/index.js
 import express from 'express';
-import appRoutes from './appRoutes';
-import usersRoutes from './usersRoutes';
-import authRoutes from './authRoutes';
-import filesRoutes from './filesRoutes';
+import AppController from '../controllers/AppController';
+import UsersController from '../controllers/UsersController';
+import AuthController from '../controllers/AuthController';
+import FilesController from '../controllers/FilesController';
 
-const router = express.Router();
+function controllerRouting(app) {
+  const router = express.Router();
+  app.use('/', router);
 
-// Mount the routes
-router.use('/status', appRoutes);
-router.use('/stats', appRoutes);
-router.use('/users', usersRoutes);
-router.use('/connect', authRoutes);
-router.use('/disconnect', authRoutes);
-router.use('/files', filesRoutes);
+  // App Controller
+  router.get('/status', AppController.getStatus);
+  router.get('/stats', AppController.getStats);
 
-export default router;
+  // User Controller
+  router.post('/users', UsersController.postNew);
+  router.get('/users/me', UsersController.getMe);
+
+  // Auth Controller
+  router.get('/connect', AuthController.getConnect);
+  router.get('/disconnect', AuthController.getDisconnect);
+
+  // Files Controller
+  router.post('/files', FilesController.postUpload);
+  router.get('/files/:id', FilesController.getShow);
+  router.get('/files', FilesController.getIndex);
+  router.put('/files/:id/publish', FilesController.putPublish);
+  router.put('/files/:id/unpublish', FilesController.putUnpublish);
+  router.get('/files/:id/data', FilesController.getFile);
+}
+
+export default controllerRouting;

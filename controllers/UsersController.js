@@ -9,67 +9,70 @@ const userQueue = new Queue('userQueue');
 class UsersController {
   /**
    * Creates a user using email and password.
-   * @param {Object} request - The request object.
-   * @param {Object} response - The response object.
+   * - Email and password are required.
+   * - If the email already exists, return an error.
+   * - Password must be hashed with SHA1 before storing.
+   * - Returns the created user with email and auto-generated id.
    */
-  static async postNew(request, response) {
-    const { email, password } = request.body;
+  static async postNew(req, res) {
+    const { email, password } = req.body;
 
-    // Validate email and password
-    if (!email) return response.status(400).json({ error: 'Missing email' });
-    if (!password) return response.status(400).json({ error: 'Missing password' });
+    if (!email) {
+      return res.status(400).json({ error: 'Missing email' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Missing password' });
+    }
 
     try {
-      // Check if email already exists
       const existingUser = await dbClient.usersCollection.findOne({ email });
-      if (existingUser) return response.status(400).json({ error: 'Already exists' });
 
-      // Hash the password
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already exists' });
+      }
+
       const hashedPassword = sha1(password);
-
-      // Create the new user
       const result = await dbClient.usersCollection.insertOne({
         email,
         password: hashedPassword,
       });
 
-      // Queue a task for the new user
-      await userQueue.add({ userId: result.insertedId.toString() });
-
-      // Respond with the new user
       const newUser = {
-        id: result.insertedId,
+        id: result.insertedId.toString(),
         email,
       };
-      return response.status(201).json(newUser);
 
-    } catch (err) {
-      // Handle unexpected errors
-      console.error('Error creating user:', err);
-      return response.status(500).json({ error: 'Error creating user' });
+      // Add user creation event to queue
+      await userQueue.add({ userId: newUser.id });
+
+      return res.status(201).json(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      await userQueue.add({ error: 'User creation failure' });
+      return res.status(500).json({ error: 'Error creating user' });
     }
   }
 
-  /**
-   * Retrieves the user based on the token used.
-   * @param {Object} request - The request object.
-   * @param {Object} response - The response object.
-   */
-  static async getMe(request, response) {
+  static async getMe(req, res) {
     try {
-      const { userId } = await userUtils.getUserIdAndKey(request);
+      const { userId } = await userUtils.getUserIdAndKey(req);
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       const user = await userUtils.getUser({ _id: ObjectId(userId) });
 
-      if (!user) return response.status(401).json({ error: 'Unauthorized' });
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
 
-      // Return user object without sensitive fields
       const { _id, password, ...userData } = user;
-      return response.status(200).json({ id: _id, ...userData });
-
-    } catch (err) {
-      // Handle unexpected errors
-      console.error('Error retrieving user:', err);
-      return response.status(500).json({ error: 'Internal Server Error' });
+      return res.status(200).json({ id: _id.toString(), ...userData });
+    } catch (error) {
+      console.error('Error retrieving user:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 }
