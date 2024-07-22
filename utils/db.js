@@ -17,17 +17,7 @@ class DBClient {
     const connectionString = `mongodb://${host}:${port}/${databaseName}`;
 
     this.client = new MongoClient(connectionString, { useUnifiedTopology: true });
-    this.connected = false;
-
-    this.client.connect()
-      .then(() => {
-        this.connected = true;
-        console.log('MongoDB client connected successfully');
-      })
-      .catch((err) => {
-        this.connected = false;
-        console.error('MongoDB client connection error:', err);
-      });
+    this.client.connect();
   }
 
   /**
