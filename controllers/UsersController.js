@@ -54,6 +54,11 @@ class UsersController {
     }
   }
 
+  /**
+   * Retrieves the user based on the token used.
+   * - If not found, return Unauthorized error.
+   * - Otherwise, return the user object (email and id only).
+   */
   static async getMe(req, res) {
     try {
       const { userId } = await userUtils.getUserIdAndKey(req);
