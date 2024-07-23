@@ -7,78 +7,56 @@ import userUtils from '../utils/user';
 const userQueue = new Queue('userQueue');
 
 class UsersController {
-  /**
-   * Creates a user using email and password.
-   * - Email and password are required.
-   * - If the email already exists, return an error.
-   * - Password must be hashed with SHA1 before storing.
-   * - Returns the created user with email and auto-generated id.
-   */
   static async postNew(req, res) {
     const { email, password } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Missing email' });
-    }
+    if (!email) return res.status(400).send({ error: 'Missing email' });
 
-    if (!password) {
-      return res.status(400).json({ error: 'Missing password' });
-    }
+    if (!password) return res.status(400).send({ error: 'Missing password' });
 
+    const emailExists = await dbClient.usersCollection.findOne({ email });
+
+    if (emailExists) return res.status(400).send({ error: 'Already exist' });
+
+    const hashedPassword = sha1(password);
+
+    let result;
     try {
-      const existingUser = await dbClient.usersCollection.findOne({ email });
-
-      if (existingUser) {
-        return res.status(400).json({ error: 'Email already exists' });
-      }
-
-      const hashedPassword = sha1(password);
-      const result = await dbClient.usersCollection.insertOne({
+      result = await dbClient.usersCollection.insertOne({
         email,
         password: hashedPassword,
       });
-
-      const newUser = {
-        id: result.insertedId.toString(),
-        email,
-      };
-
-      // Add user creation event to queue
-      await userQueue.add({ userId: newUser.id });
-
-      return res.status(201).json(newUser);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      await userQueue.add({ error: 'User creation failure' });
-      return res.status(500).json({ error: 'Error creating user' });
+    } catch (err) {
+      await userQueue.add({});
+      return res.status(500).send({ error: 'Error creating user.' });
     }
+
+    const newUser = {
+      id: result.insertedId,
+      email,
+    };
+
+    await userQueue.add({
+      userId: result.insertedId.toString(),
+    });
+
+    return res.status(201).send(newUser);
   }
 
-  /**
-   * Retrieves the user based on the token used.
-   * - If not found, return Unauthorized error.
-   * - Otherwise, return the user object (email and id only).
-   */
   static async getMe(req, res) {
-    try {
-      const { userId } = await userUtils.getUserIdAndKey(req);
+    const { userId } = await userUtils.getUserIdAndKey(req);
 
-      if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+    const user = await userUtils.getUser({
+      _id: ObjectId(userId),
+    });
 
-      const user = await userUtils.getUser({ _id: ObjectId(userId) });
+    if (!user) return res.status(401).send({ error: 'Unauthorized' });
 
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+    const processedUser = { id: user._id, ...user };
+    delete processedUser._id;
+    delete processedUser.password;
 
-      const { _id, password, ...userData } = user;
-      return res.status(200).json({ id: _id.toString(), ...userData });
-    } catch (error) {
-      console.error('Error retrieving user:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
+    return res.status(200).send(processedUser);
   }
 }
 
