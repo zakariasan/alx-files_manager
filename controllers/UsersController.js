@@ -10,28 +10,34 @@ class UsersController {
   static async postNew(req, res) {
     const { email, password } = req.body;
 
-    if (!email) return res.status(400).send({ error: 'Missing email' });
+    if (!email) {
+      return res.status(400).send({ error: 'Missing email' });
+    }
 
-    if (!password) return res.status(400).send({ error: 'Missing password' });
+    if (!password) {
+      return res.status(400).send({ error: 'Missing password' });
+    }
 
     const emailExists = await dbClient.usersCollection.findOne({ email });
 
-    if (emailExists) return res.status(400).send({ error: 'Already exist' });
+    if (emailExists) {
+      return res.status(400).send({ error: 'Already exist' });
+    }
 
-    const hashedPassword = sha1(password);
+    const sha1Password = sha1(password);
 
     let result;
     try {
       result = await dbClient.usersCollection.insertOne({
         email,
-        password: hashedPassword,
+        password: sha1Password,
       });
     } catch (err) {
       await userQueue.add({});
       return res.status(500).send({ error: 'Error creating user.' });
     }
 
-    const newUser = {
+    const user = {
       id: result.insertedId,
       email,
     };
@@ -40,7 +46,7 @@ class UsersController {
       userId: result.insertedId.toString(),
     });
 
-    return res.status(201).send(newUser);
+    return res.status(201).send(user);
   }
 
   static async getMe(req, res) {
@@ -50,7 +56,9 @@ class UsersController {
       _id: ObjectId(userId),
     });
 
-    if (!user) return res.status(401).send({ error: 'Unauthorized' });
+    if (!user) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    }
 
     const processedUser = { id: user._id, ...user };
     delete processedUser._id;
