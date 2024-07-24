@@ -8,6 +8,7 @@ import userUtils from '../utils/user';
 const userQueue = new Queue('userQueue');
 
 class UsersController {
+
   static async postNew(request, response) {
     const { email, password } = request.body;
 
@@ -43,7 +44,6 @@ class UsersController {
 
     return response.status(201).send(user);
   }
-
   static async getMe(request, response) {
     const { userId } = await userUtils.getUserIdAndKey(request);
 
