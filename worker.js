@@ -1,10 +1,10 @@
 import Queue from 'bull';
 import { ObjectId } from 'mongodb';
 import { promises as fsPromises } from 'fs';
+import imageThumbnail from 'image-thumbnail';
 import fileUtils from './utils/file';
 import userUtils from './utils/user';
 import basicUtils from './utils/basic';
-import imageThumbnail from 'image-thumbnail';
 
 const fileQueue = new Queue('fileQueue');
 const userQueue = new Queue('userQueue');

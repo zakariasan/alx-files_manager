@@ -10,7 +10,6 @@ function controllerRouting(app) {
   const router = express.Router();
   app.use('/', router);
 
-
   router.get('/status', (req, res) => {
     AppController.getStatus(req, res);
   });
@@ -26,7 +25,6 @@ function controllerRouting(app) {
   router.get('/users/me', (req, res) => {
     UsersController.getMe(req, res);
   });
-
 
   router.get('/connect', (req, res) => {
     AuthController.getConnect(req, res);
